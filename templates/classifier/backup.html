@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Canvas</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+    <style>
+        @import "https://fonts.googleapis.com/css?family=Lato:300";
+        .hero {
+            position: relative;
+            width: 100%;
+            height: 110vh;
+            color: white;
+            text-align: center;
+            font-family: Lato, sans-serif;
+            font-weight: 300;
+            text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.4);
+            border-bottom: solid 5px white;
+            display: flex;
+            flex-direction: row;
+            justify-content: center; 
+            align-items: center;
+        }
+        .hero:before, .hero:after {
+            position: absolute;
+            display: block;
+            top: 50%;
+            left: 0;
+            right: 0;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        /*
+        .hero:before {
+            content: "Good news, everyone!";
+            font-size: 46px;
+            line-height: 60px;
+            margin-top: -40px;
+        }
+        .hero:after {
+            content: "I've taught the toaster to feel love!";
+            font-size: 20px;
+            line-height: 30px;
+            margin-top: 20px;
+        }
+        .hero--intro:before {
+            content: "Gradient backgrounds";
+        }
+        .hero--intro:after {
+            content: "A curated collection";
+        }
+        */
+        .hero--intro {
+            background: linear-gradient(135deg, #4567b2 20%, #8ab9ff 80%);
+        }
+        .hero--1 {
+            background: linear-gradient(135deg, #76ad39 20%, #cdff8a 80%);
+        }
+        .hero--2 {
+            background: linear-gradient(135deg, #b24592 20%, #f15f79 80%);
+        }
+        .hero--3 {
+            background: linear-gradient(135deg, #432b58 20%, #734b6f 80%);
+        }
+        .hero--4 {
+            background: linear-gradient(135deg, #904e95 20%, #e96450 80%);
+        }
+        .hero--5 {
+            background: linear-gradient(135deg, #ff5f6d 20%, #ffc371 80%);
+        }
+        .hero--6 {
+            background: linear-gradient(135deg, #ff9068 20%, #ff4b1f 80%);
+        }
+        .hero--7 {
+            background: linear-gradient(170deg, #131112 20%, #1768AC 90%);         
+        }
+        .hero--8 {
+            background: linear-gradient(135deg, #b993d8 20%, #8ca6dc 80%);
+        }
+        .hero--9 {
+            background: linear-gradient(135deg, #3ca55f 20%, #b5ac59 80%);
+        }
+        .hero--10 {
+            background: linear-gradient(135deg, #2a99ef 20%, #52d9e5 80%);
+        }
+        .hero--11 {
+            background: linear-gradient(135deg, #225e9e 20%, #712c69 80%);
+        }
+        
+        body{
+            /*background-image: linear-gradient(rgb(255, 116, 56), black);*/
+            background-color: white;
+        }
+        .paint-canvas {
+            border: 1px black solid;
+            display: block;
+            margin: 1rem;
+            background-color: white;
+            width: 150px;
+            height: 150px;
+        }
+        
+    </style>
+</head>
+<body>
+    <div class="hero hero--7">
+        <div style="display: flex; flex-direction:column;">
+            <canvas class="js-paint  paint-canvas" width="150" height="150"></canvas>
+            <button class="clear-btn btn-dark">Clear</button>
+        </div>
+        <h1 class="prediction"></h1>
+        <div id="chart_div"></div>
+    </div>
+
+</body>
+
+<script>
+    google.charts.load('current', {'packages':['corechart']});
+    google.charts.setOnLoadCallback(drawBasic);
+    var dataset;
+    var chart;
+    var options;
+    function drawBasic(){
+        options = {
+            width: 1000,
+            height: 400,
+            animation:{
+                duration: 1000,
+                easing: 'out',
+            },
+            vAxis: {
+                minValue:0, 
+                maxValue:100,
+                gridlines: {
+                    color: 'transparent'
+                },
+                textPosition: 'none'
+            },
+            legend: {position: 'none'},
+            viewWindow:{
+                max:1000,
+                min:-100
+            },
+            backgroundColor: { fill:'transparent' }
+        };
+        dataset = new google.visualization.DataTable();
+        dataset.addColumn('string', 'N');
+        dataset.addColumn('number', 'Score');
+
+        for (let i=0; i<10; i++){
+            dataset.addRow([i.toString(), 1]);
+        }
+
+        chart = new google.visualization.ColumnChart(document.getElementById("chart_div"))
+        chart.draw(dataset, options);
+    }
+        
+    const paintCanvas = document.querySelector( '.js-paint' );
+    const context = paintCanvas.getContext( '2d' );
+    const clr_btn = document.querySelector('.clear-btn');
+    const pred = document.querySelector( '.prediction' );
+
+    context.lineCap = 'round';
+    context.lineWidth = 10;
+    width = 150;
+    height = 150;
+
+    let x = 0, y = 0;
+    let isMouseDown = false;
+
+    function updateChart(newdata) {
+        for (let i=0; i<10; i++){
+            dataset.setValue(i, 1, newdata[i]);
+        }
+        chart.draw(dataset, options);
+    }
+    
+    const stopDrawing = () => { 
+        isMouseDown = false; 
+        rgba = context.getImageData(0, 0, width, height);
+        console.log(rgba);
+        data = [];
+        for (let i=3; i<rgba.data.length; i+=4){
+            data.push(rgba.data[i]);
+        }
+        var dataset;
+        $.ajax({
+            type: "POST",
+            url: '/my_def_in_view',
+            data: {
+                "img": Array.from(data),
+            },
+            dataType: "json",
+            success: function (datarec) {
+                // any process in data
+                console.log("successfull, prediciton: ");
+                console.log(datarec);
+                pred.innerHTML = datarec["prediction"];
+                newdata = datarec["pred_array"];
+                //plot
+                updateChart(newdata);
+                //plot end
+            },
+            failure: function () {
+                console.log("failure");
+            }
+        });
+        
+    }
+    const startDrawing = event => {
+        isMouseDown = true;   
+    [x, y] = [event.offsetX, event.offsetY];  
+    }
+    const drawLine = event => {
+        if ( isMouseDown ) {
+            const newX = event.offsetX;
+            const newY = event.offsetY;
+            context.beginPath();
+            context.moveTo( x, y );
+            context.lineTo( newX, newY );
+            context.stroke();
+            //[x, y] = [newX, newY];
+            x = newX;
+            y = newY;
+        }
+    }
+
+    clr_btn.onclick = function(){ 
+        context.clearRect(0, 0, width, height); 
+        pred.innerHTML = '';
+        updateChart([1,1,1,1,1,1,1,1,1,1]);
+    }
+
+    paintCanvas.addEventListener( 'mousedown', startDrawing );
+    paintCanvas.addEventListener( 'mousemove', drawLine );
+    paintCanvas.addEventListener( 'mouseup', stopDrawing );
+
+</script>
+</html>
+
