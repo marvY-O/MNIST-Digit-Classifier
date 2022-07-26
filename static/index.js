@@ -77,8 +77,6 @@ height = 150;
 let x = 0, y = 0;
 let isMouseDown = false;
 
-
-
 const stopDrawing = () => { 
     isMouseDown = false; 
     rgba = context.getImageData(0, 0, width, height);
