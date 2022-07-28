@@ -66,8 +66,13 @@ function updateChart(newdata){
 
 const paintCanvas = document.querySelector( '.js-paint' );
 const context = paintCanvas.getContext( '2d' );
+const smallCanvas = document.querySelector( '.small-canvas' );
+const smallContext = smallCanvas.getContext('2d');
 const clr_btn = document.querySelector('.clear-btn');
 const pred = document.querySelector( '.prediction-value' );
+const loading_gif = document.querySelector( '.loader' );
+const err_msg = document.querySelector( '.server-error' );
+loading_gif.style.display = "none";
 
 context.lineCap = 'round';
 context.lineWidth = 10;
@@ -79,24 +84,41 @@ let isMouseDown = false;
 
 const stopDrawing = () => { 
     isMouseDown = false; 
-    rgba = context.getImageData(0, 0, width, height);
-    console.log(rgba);
+
+    smallContext.clearRect(0, 0, smallCanvas.width, smallCanvas.height);
+    smallContext.drawImage(paintCanvas, 0, 0, smallCanvas.width, smallCanvas.height);        
+    smallImageData = smallContext.getImageData(0, 0, smallCanvas.width, smallCanvas.height);
+    rgba = smallImageData;
+
     data_img = [];
     for (let i=3; i<rgba.data.length; i+=4){
         data_img.push(rgba.data[i]);
     }
+    /*data_img = tf.tensor(data_img);
+    data_img = tf.reshape(data_img, [150,150]);
+    resized = tf.image.resizeBilinear(tf.expandDims(data_img), [28, 28]);
+    resized_img = tf.FromPixels(data_img).resizeBilinear([28,28]);
+    console.log(resized_img);*/
 
+    console.log(data_img);
+
+    if (pred.style.display == 'block'){
+        pred.style.display = "none";
+    }
+    loading_gif.style.display = "block";
+
+    
     $.ajax({
         type: "POST",
         url: '/model_predict',
         data: {
-            "img": Array.from(data_img),
+            "img": data_img,
         },
         dataType: "json",
         success: function (data_recieved) {
+            loading_gif.style.display = "none";
 
-            console.log("successfull, prediciton: ");
-            console.log(data_recieved);
+            console.log("successfull");
 
             pred.style.display = 'block';
             pred.innerHTML = data_recieved["prediction"];
@@ -107,8 +129,13 @@ const stopDrawing = () => {
 
             updateChart(newdata);
         },
-        failure: function () {
-            console.log("failure");
+        error: function () {
+            loading_gif.style.display = "none";
+            err_msg.style.display = "flex";
+        },
+        failure: function() {
+            loading_gif.style.display = "none";
+            err_msg.style.display = "flex";
         }
     });
     
@@ -128,8 +155,7 @@ const drawLine = event => {
         x = newX;
         y = newY;
     }
-}
-
+}  
 clr_btn.onclick = function(){ 
     context.clearRect(0, 0, width, height); 
     updateChart([0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1]);
